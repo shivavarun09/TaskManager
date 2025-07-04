@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task Manager</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+    }
+    #taskForm {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background-color: white;
+    }
+    .taskCardStyle {
+      border: 1px solid black;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    #taskContainer {
+      padding: 1rem;
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(1, 1fr);
+    }
+    @media screen and (min-width: 991px) {
+      #taskContainer {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-3">
+    <h2 class="mb-3">Task Manager</h2>
+    <form id="taskForm" class="mt-2">
+      <input id="taskTitle" class="form-control mb-2" type="text" placeholder="Enter task title" />
+      <input id="taskDesc" class="form-control mb-2" type="text" placeholder="Enter task details" />
+      <button class="btn btn-success mb-4" type="submit">Add Task</button>
+    </form>
+
+    <div id="taskContainer"></div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="exampleModalLabel">Edit Task</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editForm">
+            <input id="editTaskTitle" class="form-control mb-2" type="text" placeholder="Edit task title" />
+            <input id="edittaskDesc" class="form-control mb-2" type="text" placeholder="Edit task details" />
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" onclick="saveEditedTask()">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const taskList = JSON.parse(localStorage.getItem("taskListLocal")) || [];
+    const taskForm = document.getElementById("taskForm");
+    const taskContainer = document.getElementById("taskContainer");
+    let editIndex = null;
+
+    // Add Task
+    taskForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+      const taskTitle = document.getElementById("taskTitle").value.trim();
+      const taskDesc = document.getElementById("taskDesc").value.trim();
+
+      if (!taskTitle || !taskDesc) {
+        alert("Enter both task title and description");
+        return;
+      }
+
+      taskList.push({
+        taskName: taskTitle,
+        taskDetails: taskDesc,
+        taskStatus: "notstarted" // default
+      });
+
+      localStorage.setItem("taskListLocal", JSON.stringify(taskList));
+      renderTasks();
+      taskForm.reset();
+    });
+
+    // Render Tasks
+    function renderTasks() {
+      taskContainer.innerHTML = "";
+
+      if (taskList.length === 0) {
+        const msg = document.createElement("h3");
+        msg.innerText = "There are no tasks. Please add a task to get started.";
+        msg.classList.add("text-center", "text-muted", "mt-4");
+        taskContainer.appendChild(msg);
+        return;
+      }
+
+      taskList.forEach((val, index) => {
+        const taskCard = document.createElement("div");
+        taskCard.classList.add("taskCardStyle");
+
+        // Set background color based on status
+        if (val.taskStatus === 'completed') {
+          taskCard.style.backgroundColor = 'lightgreen';
+        } else if (val.taskStatus === 'inprogress') {
+          taskCard.style.backgroundColor = 'lightyellow';
+        } else if (val.taskStatus === 'notstarted') {
+          taskCard.style.backgroundColor = 'lightcoral';
+        }
+
+        taskCard.innerHTML = `
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title"><strong>${val.taskName.toUpperCase()}</strong></h5>
+              <p class="card-text">${val.taskDetails}</p>
+              <button class="btn btn-light mb-2" onclick="openEditModal(${index})">&#9998; Edit</button>
+              <button class="btn btn-danger mb-2" onclick="del(${index})">&#128465; Delete</button>
+              <select class="form-select" onchange="updateTaskStatus(${index}, this.value)">
+                <option value="notstarted" ${val.taskStatus === "notstarted" ? "selected" : ""}>Not Started</option>
+                <option value="inprogress" ${val.taskStatus === "inprogress" ? "selected" : ""}>In Progress</option>
+                <option value="completed" ${val.taskStatus === "completed" ? "selected" : ""}>Completed</option>
+              </select>
+            </div>
+          </div>
+        `;
+
+        taskContainer.appendChild(taskCard);
+      });
+    }
+
+    // Edit Task Modal
+    function openEditModal(index) {
+      editIndex = index;
+      const task = taskList[index];
+      document.getElementById("editTaskTitle").value = task.taskName;
+      document.getElementById("edittaskDesc").value = task.taskDetails;
+
+      const modal = new bootstrap.Modal(document.getElementById("exampleModal"));
+      modal.show();
+    }
+
+    // Save Edited Task
+    function saveEditedTask() {
+      const title = document.getElementById("editTaskTitle").value.trim();
+      const desc = document.getElementById("edittaskDesc").value.trim();
+
+      if (!title || !desc) {
+        alert("Enter both fields");
+        return;
+      }
+
+      taskList[editIndex] = {
+        ...taskList[editIndex],
+        taskName: title,
+        taskDetails: desc
+      };
+
+      localStorage.setItem("taskListLocal", JSON.stringify(taskList));
+      renderTasks();
+
+      const modal = bootstrap.Modal.getInstance(document.getElementById("exampleModal"));
+      modal.hide();
+    }
+
+    // Delete Task
+    function del(index) {
+      if (confirm("Are you sure want to delete this task?")) {
+        taskList.splice(index, 1);
+        localStorage.setItem("taskListLocal", JSON.stringify(taskList));
+        renderTasks();
+      }
+    }
+
+    // Update Task Status
+    function updateTaskStatus(index, status) {
+      taskList[index] = {
+        ...taskList[index],
+        taskStatus: status
+      };
+      localStorage.setItem("taskListLocal", JSON.stringify(taskList));
+      renderTasks();
+    }
+
+    // Initial Render
+    renderTasks();
+  </script>
+</body>
+</html>
