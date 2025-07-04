@@ -42,7 +42,7 @@
     <h2 class="mb-3">Task Manager</h2>
     <form id="taskForm" class="mt-2">
       <input id="taskTitle" class="form-control mb-2" type="text" placeholder="Enter task title" />
-      <input id="taskDesc" class="form-control mb-2" type="text" placeholder="Enter task details" />
+<textarea rows="2" id="taskDesc" class="form-control mb-2" placeholder="Enter task details"></textarea>
       <button class="btn btn-success mb-4" type="submit">Add Task</button>
     </form>
 
@@ -60,7 +60,7 @@
         <div class="modal-body">
           <form id="editForm">
             <input id="editTaskTitle" class="form-control mb-2" type="text" placeholder="Edit task title" />
-            <input id="edittaskDesc" class="form-control mb-2" type="text" placeholder="Edit task details" />
+            <textarea rows="2" id="edittaskDesc" class="form-control mb-2" placeholder="Enter task details"></textarea>
           </form>
         </div>
         <div class="modal-footer">
@@ -118,11 +118,11 @@
 
         // Set background color based on status
         if (val.taskStatus === 'completed') {
-          taskCard.style.backgroundColor = 'lightgreen';
+          taskCard.style.backgroundColor = 'green';
         } else if (val.taskStatus === 'inprogress') {
-          taskCard.style.backgroundColor = 'lightyellow';
+          taskCard.style.backgroundColor = 'yellow';
         } else if (val.taskStatus === 'notstarted') {
-          taskCard.style.backgroundColor = 'lightcoral';
+          taskCard.style.backgroundColor = 'red';
         }
 
         taskCard.innerHTML = `
